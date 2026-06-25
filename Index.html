@@ -32,21 +32,21 @@
 
   <script>
     // ==========================================
-    // 1. WKLEJ KOD BASE64 TYLKO W TYM JEDNYM MIEJSCU
+    // 1. GLOBALNY LINK DO LOGO APLIKACJI
     // ==========================================
-    const APP_LOGO_BASE64 = 'data:image/png;base64,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';
+    const APP_LOGO_LINK = '';
 
-    // Skrypt dynamicznie "wstrzyknie" to logo do nagłówka (jako Favicon)
+    // Automatyczne wstrzykiwanie favikony
     (function() {
       let icon = document.createElement('link');
       icon.rel = 'icon';
       icon.type = 'image/png';
-      icon.href = APP_LOGO_BASE64;
+      icon.href = APP_LOGO_LINK;
       document.head.appendChild(icon);
 
       let appleIcon = document.createElement('link');
       appleIcon.rel = 'apple-touch-icon';
-      appleIcon.href = APP_LOGO_BASE64;
+      appleIcon.href = APP_LOGO_LINK;
       document.head.appendChild(appleIcon);
     })();
   </script>
@@ -59,7 +59,7 @@
       <span class="whitespace-nowrap">System Szafek 2.0</span>
     </div>
     <div class="flex items-center gap-3">
-      <button id="btn-admin-stats" class="hidden bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs font-bold border border-purple-500 shadow-sm transition" onclick="openAdminStatsModal()">Logi Aktywności</button>
+      <button id="btn-admin-stats" class="hidden bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs font-bold border border-purple-500 shadow-sm transition" onclick="openAdminStatsModal()">Panel Administracyjny</button>
       <div id="userInfo" class="bg-blue-700 px-3 py-1 rounded shadow-inner">Ładowanie...</div>
     </div>
   </nav>
@@ -238,7 +238,10 @@
     <div class="bg-white rounded-lg p-5 w-[1200px] max-w-[95vw] shadow-2xl flex flex-col h-[85vh] overflow-hidden">
       
       <div id="admin-stats-view" class="flex flex-col h-full overflow-hidden">
-        <h2 class="text-xl font-bold mb-4 border-b pb-2 text-gray-800 text-purple-700 flex-shrink-0">Aktywność Użytkowników <span class="text-sm font-normal text-gray-500">(Kliknij w wiersz, aby zobaczyć szczegóły)</span></h2>
+        <div class="flex justify-between items-center mb-4 border-b pb-2 flex-shrink-0">
+          <h2 class="text-xl font-bold text-gray-800 text-purple-700">Lista Użytkowników Systemu</h2>
+          <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded font-bold transition shadow" onclick="openUserEditModal()">+ Dodaj użytkownika</button>
+        </div>
         <div class="flex-1 overflow-auto border border-gray-200 rounded relative">
           <table class="w-full text-left text-sm whitespace-nowrap table-fixed min-w-max">
             <thead id="admin-stats-head"></thead>
@@ -266,9 +269,39 @@
     </div>
   </div>
 
+  <div id="userEditModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center z-[90]">
+    <div class="bg-white rounded-lg p-5 w-[450px] shadow-2xl flex flex-col border-t-4 border-purple-500">
+      <h2 id="userModalTitle" class="text-xl font-bold mb-4 text-gray-800">Zarządzanie użytkownikiem</h2>
+      <input type="hidden" id="user-old-email">
+      
+      <div class="space-y-3 mb-6">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Adres Email (Konto Google - Wymagane)</label>
+          <input type="email" id="user-email" class="w-full border rounded p-2 text-sm bg-purple-50 border-purple-300" placeholder="np. imie.nazwisko@firma.pl">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Dział (Wpisywany wielkimi literami, np. PRODUKCJA)</label>
+          <input list="dzialy-list" id="user-dzial" class="w-full border rounded p-2 text-sm" placeholder="Wprowadź lub wybierz dział...">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Rola w systemie</label>
+          <select id="user-rola" class="w-full border rounded p-2 text-sm bg-white">
+            <option value="user">User (Dostęp tylko do swojego działu)</option>
+            <option value="admin">Admin (Pełny dostęp do wszystkiego)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded font-bold transition" onclick="closeModal('userEditModal')">Anuluj</button>
+        <button id="btn-save-user" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded font-bold shadow transition" onclick="saveUser()">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // 2. Wstrzyknięcie zmiennej z kodem Base64 do tagu <img> w pasku nawigacji
-    document.getElementById('nav-logo').src = APP_LOGO_BASE64;
+    // Wstrzyknięcie logo do paska nawigacji z wykorzystaniem stałej
+    document.getElementById('nav-logo').src = APP_LOGO_LINK;
 
     let currentUserAccess = null, szafkiData = [], pracownicyData = [];
     let systemDicts = { miejsca: [], dzialy: [], plcie: [] };
@@ -312,10 +345,10 @@
         'Miejsce': 180, 'Nr': 80, 'Zamek': 100, 'Płeć': 100, 'Akcja': 100
       },
       adminStats: {
-        'Użytkownik': 220, 'Dział': 160, 'Rola': 90, 'Logowania': 100, 'Akcje': 90, 'Ostatnia Akcja (Data)': 220, 'Typ / Szczegóły': 280
+        'Użytkownik': 200, 'Dział': 130, 'Rola': 70, 'Logowania': 80, 'Akcje': 70, 'Ostatnia Akcja (Data)': 150, 'Typ / Szczegóły': 220, 'Operacje': 150
       },
       adminDetails: {
-        'Data': 200, 'Typ': 150, 'Szafka ID': 100, 'Szczegóły': 500
+        'Data': 160, 'Typ': 110, 'Szafka ID': 80, 'Szczegóły': 400
       }
     };
     
@@ -399,6 +432,7 @@
        closeModal('assignEmpModal');
        closeModal('assignLockerModal');
        closeModal('szafkaModal');
+       closeModal('userEditModal');
        
        document.getElementById('table-szafki-container').classList.add('hidden'); 
        document.getElementById('loading-szafki').classList.remove('hidden');
@@ -437,15 +471,14 @@
     };
 
     // ==========================================
-    // LOGI ADMINA
+    // LOGI ADMINA / OBSŁUGA PANELU UŻYTKOWNIKÓW
     // ==========================================
     function openAdminStatsModal() {
-      document.getElementById('admin-stats-tbody').innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Pobieranie logów z serwera...</td></tr>';
+      document.getElementById('admin-stats-tbody').innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Pobieranie logów i bazy uprawnień...</td></tr>';
       showAdminStatsView();
       document.getElementById('adminStatsModal').classList.remove('hidden');
 
       google.script.run.withSuccessHandler(data => {
-        // Pakiety ze statystykami i surowymi logami
         adminRawLogs = data.rawLogs;
         
         adminStatsData = data.stats.map(u => ({
@@ -463,12 +496,11 @@
         renderAdminStatsTableHeaders();
         applyAdminStatsFilters();
       }).withFailureHandler(e => {
-         document.getElementById('admin-stats-tbody').innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">${e.message}</td></tr>`;
+         document.getElementById('admin-stats-tbody').innerHTML = `<tr><td colspan="8" class="p-4 text-center text-red-500">${e.message}</td></tr>`;
       }).getAdminActivity();
     }
     
     function showAdminStatsView() {
-      // Przywracamy właściwy tryb renderowania dla Tailwind (flex zamiast block)
       document.getElementById('admin-details-view').classList.remove('flex');
       document.getElementById('admin-details-view').classList.add('hidden');
       
@@ -477,23 +509,28 @@
     }
 
     function renderAdminStatsTableHeaders() {
-      const cols = ['Użytkownik', 'Dział', 'Rola', 'Logowania', 'Akcje', 'Ostatnia Akcja (Data)', 'Typ / Szczegóły'];
+      const cols = ['Użytkownik', 'Dział', 'Rola', 'Logowania', 'Akcje', 'Ostatnia Akcja (Data)', 'Typ / Szczegóły', 'Operacje'];
       let h1 = '<tr>';
       cols.forEach(col => {
         let wStyle = `style="width:${columnWidths.adminStats[col]}px; min-width:${columnWidths.adminStats[col]}px; max-width:${columnWidths.adminStats[col]}px;"`;
         let icon = sortConfigAdmin.col === col ? (sortConfigAdmin.asc ? ' ↑' : ' ↓') : ' ↕';
 
-        h1 += `<th class="px-2 py-2 relative bg-gray-100 border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortAdminStats('${col}')">
-                 <div class="flex items-center justify-between gap-1">
-                   <span class="truncate">${col}</span>
-                   <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
-                 </div>
-                 <div class="resizer" onclick="event.stopPropagation()"></div>
-               </th>`;
+        if (col === 'Operacje') {
+          h1 += `<th class="px-2 py-2 sticky-right text-center" ${wStyle}>Operacje</th>`;
+        } else {
+          h1 += `<th class="px-2 py-2 relative bg-gray-100 border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortAdminStats('${col}')">
+                   <div class="flex items-center justify-between gap-1">
+                     <span class="truncate">${col}</span>
+                     <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
+                   </div>
+                   <div class="resizer" onclick="event.stopPropagation()"></div>
+                 </th>`;
+        }
       });
       h1 += '</tr><tr class="filter-row border-b shadow-sm">';
       cols.forEach(col => {
-        h1 += `<th class="px-2 py-1.5 border-r border-gray-200"><input type="text" class="w-full border rounded text-xs p-1" placeholder="Filtruj..." value="${adminStatsFilters[col]||''}" onkeyup="adminStatsFilters['${col}']=this.value.toLowerCase(); applyAdminStatsFilters()"></th>`;
+        if(col === 'Operacje') h1 += `<th class="sticky-right border-b border-gray-200"></th>`;
+        else h1 += `<th class="px-2 py-1.5 border-r border-gray-200"><input type="text" class="w-full border rounded text-xs p-1" placeholder="Filtruj..." value="${adminStatsFilters[col]||''}" onkeyup="adminStatsFilters['${col}']=this.value.toLowerCase(); applyAdminStatsFilters()"></th>`;
       });
       h1 += '</tr>';
       document.getElementById('admin-stats-head').innerHTML = h1;
@@ -534,7 +571,7 @@
       f.forEach(u => {
         let rolaClass = u['Rola'] === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
         
-        html += `<tr class="hover:bg-purple-100 border-b cursor-pointer transition-colors" onclick="openUserLogs('${u['Użytkownik']}')">`;
+        html += `<tr class="border-b">`;
         
         cols.forEach(col => {
           let val = u[col];
@@ -556,18 +593,27 @@
             html += `<td class="p-2 truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;" title="${val}">${val}</td>`;
           }
         });
+
+        let btnCol = `
+          <div class="flex items-center justify-center gap-1 h-full pr-1">
+            <button onclick="openUserLogs('${u['Użytkownik']}')" class="bg-purple-500 hover:bg-purple-600 text-white text-xs px-1.5 py-0.5 rounded shadow-sm">Logi</button>
+            <button onclick='openUserEditModal(${JSON.stringify(u)})' class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-1.5 py-0.5 rounded border shadow-sm">Edytuj</button>
+            <button onclick="deleteUser('${u['Użytkownik']}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-1.5 py-0.5 rounded shadow-sm">Usuń</button>
+          </div>
+        `;
+        let cwOperacje = columnWidths.adminStats['Operacje'];
+        html += `<td class="sticky-right border-b border-gray-200" style="width:${cwOperacje}px; min-width:${cwOperacje}px; max-width:${cwOperacje}px;">${btnCol}</td>`;
+        
         html += `</tr>`;
       });
       
-      if(f.length === 0) html = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Brak logów pasujących do filtra.</td></tr>';
+      if(f.length === 0) html = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Brak użytkowników pasujących do filtra.</td></tr>';
       document.getElementById('admin-stats-tbody').innerHTML = html;
     }
 
-    // --- SZCZEGÓŁOWE LOGI KONKRETNEGO UŻYTKOWNIKA ---
     function openUserLogs(email) {
       currentDetailEmail = email.toLowerCase();
       
-      // Przywracamy właściwy tryb renderowania dla Tailwind (flex zamiast block)
       document.getElementById('admin-stats-view').classList.remove('flex');
       document.getElementById('admin-stats-view').classList.add('hidden');
       
@@ -612,6 +658,62 @@
       else { sortConfigAdminDetails.col = col; sortConfigAdminDetails.asc = true; }
       renderAdminDetailsTableHeaders(); 
       applyAdminDetailsFilters();
+    }
+
+    // ==========================================
+    // DODAWANIE, EDYCJA, USUWANIE UŻYTKOWNIKÓW
+    // ==========================================
+    function openUserEditModal(userObj = null) {
+      if(userObj) {
+         document.getElementById('userModalTitle').innerText = 'Edytuj użytkownika panelu';
+         document.getElementById('user-old-email').value = userObj['Użytkownik'];
+         document.getElementById('user-email').value = userObj['Użytkownik'];
+         document.getElementById('user-dzial').value = userObj['Dział'];
+         document.getElementById('user-rola').value = userObj['Rola'];
+      } else {
+         document.getElementById('userModalTitle').innerText = 'Dodaj nowego użytkownika panelu';
+         document.getElementById('user-old-email').value = '';
+         document.getElementById('user-email').value = '';
+         document.getElementById('user-dzial').value = '';
+         document.getElementById('user-rola').value = 'user';
+      }
+      document.getElementById('userEditModal').classList.remove('hidden');
+    }
+
+    function saveUser() {
+      let btn = document.getElementById('btn-save-user');
+      btn.disabled = true; btn.innerText = "Weryfikacja...";
+
+      let emailVal = document.getElementById('user-email').value.trim();
+      let dzialVal = document.getElementById('user-dzial').value.trim();
+      let rolaVal = document.getElementById('user-rola').value;
+      let oldEmailVal = document.getElementById('user-old-email').value;
+
+      if(!emailVal) { alert("Adres email jest wymagany!"); btn.disabled = false; btn.innerText = "Zapisz"; return; }
+
+      let payload = { email: emailVal, dzial: dzialVal, rola: rolaVal, oldEmail: oldEmailVal };
+      let actionName = oldEmailVal ? 'edytujUzytkownika' : 'dodajUzytkownika';
+
+      google.script.run.withSuccessHandler(res => {
+         closeModal('userEditModal');
+         btn.disabled = false; btn.innerText = "Zapisz";
+         openAdminStatsModal();
+      }).withFailureHandler(e => {
+         btn.disabled = false; btn.innerText = "Zapisz";
+         alert("Błąd: " + e.message);
+      })[actionName](payload);
+    }
+
+    function deleteUser(email) {
+       if(currentUserAccess.email.toLowerCase().trim() === email.toLowerCase().trim()) {
+          alert("Nie możesz usunąć konta, na którym jesteś obecnie zalogowany!");
+          return;
+       }
+       if(!confirm(`Czy na pewno chcesz odebrać uprawnienia i usunąć użytkownika ${email} z systemu?`)) return;
+
+       google.script.run.withSuccessHandler(res => {
+          openAdminStatsModal();
+       }).withFailureHandler(e => alert(e.message)).usunUzytkownika(email);
     }
 
     function applyAdminDetailsFilters() {
@@ -1121,7 +1223,7 @@
       
       let html = '';
       lockers.forEach(s => {
-        html += `<tr class="hover:bg-gray-50"><td class="p-1.5">${s['Miejsce']}</td><td class="p-1.5 font-bold">${s['Nr szafki']}</td><td class="p-1.5 text-right"><button onclick="releaseLocker('${s['ID']}', this)" class="bg-red-500 text-white text-xs px-2 py-1 rounded">Zwolnij</button></td></tr>`;
+        html += `<tr class="hover:bg-gray-50"><td class="p-1.5">${s['Miejsce']}</td><td class="p-1.5 font-bold">${s['Nr szafki']}</td><td class="p-1.5 text-right"><button onclick="releaseLocker('${s['ID']}', this)" class="bg-red-500 text-white text-xs px-2 py-1 rounded shadow hover:bg-red-600">Zwolnij</button></td></tr>`;
       });
       body.innerHTML = html;
     }
