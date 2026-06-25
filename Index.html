@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Szafek</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .table-container { height: 100%; overflow: auto; }
+    table { table-layout: fixed; }
+    
+    thead { position: sticky; top: 0; z-index: 20; background-color: #f3f4f6; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th { cursor: pointer; user-select: none; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; background-color: inherit; }
+    
+    tr:nth-child(1) th:hover { background-color: #e5e7eb; }
+    .filter-row th { cursor: default; background-color: #f9fafb; }
+    
+    .resizer { position: absolute; right: 0; top: 0; width: 5px; height: 100%; cursor: col-resize; z-index: 15; touch-action: none; }
+    .resizer:hover, .is-resizing { background-color: #3b82f6; }
+    td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: 1px solid #f3f4f6; }
+    
+    .sticky-right { position: sticky; right: 0; background-color: #fff; z-index: 11; border-left: 2px solid #e5e7eb; }
+    thead .sticky-right { z-index: 21; background-color: #f3f4f6; }
+    tr:hover .sticky-right { background-color: #eff6ff; }
+    tr.bg-red-50:hover .sticky-right { background-color: #fee2e2; }
+
+    .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle;}
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .selected-row { background-color: #e0f2fe !important; }
+  </style>
+
+  <script>
+    // ==========================================
+    // 1. WKLEJ KOD BASE64 TYLKO W TYM JEDNYM MIEJSCU
+    // ==========================================
+    const APP_LOGO_BASE64 = 'data:image/png;base64,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';
+
+    // Skrypt dynamicznie "wstrzyknie" to logo do nagłówka (jako Favicon)
+    (function() {
+      let icon = document.createElement('link');
+      icon.rel = 'icon';
+      icon.type = 'image/png';
+      icon.href = APP_LOGO_BASE64;
+      document.head.appendChild(icon);
+
+      let appleIcon = document.createElement('link');
+      appleIcon.rel = 'apple-touch-icon';
+      appleIcon.href = APP_LOGO_BASE64;
+      document.head.appendChild(appleIcon);
+    })();
+  </script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans text-sm h-screen overflow-hidden flex flex-col">
+
+  <nav class="bg-blue-600 text-white p-3 shadow-md flex justify-between items-center flex-shrink-0">
+    <div class="text-lg font-bold flex items-center gap-2">
+      <img id="nav-logo" alt="Logo" class="h-8 w-auto object-contain flex-shrink-0">
+      <span class="whitespace-nowrap">System Szafek 2.0</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="btn-admin-stats" class="hidden bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs font-bold border border-purple-500 shadow-sm transition" onclick="openAdminStatsModal()">Logi Aktywności</button>
+      <div id="userInfo" class="bg-blue-700 px-3 py-1 rounded shadow-inner">Ładowanie...</div>
+    </div>
+  </nav>
+
+  <div class="container mx-auto p-4 max-w-full flex-1 flex flex-col h-full overflow-hidden">
+    
+    <div class="flex border-b border-gray-300 mb-4 gap-4 flex-shrink-0">
+      <button id="tab-szafki" class="pb-2 text-blue-600 border-b-2 border-blue-600 font-bold focus:outline-none" onclick="switchTab('szafki')">WIDOK SZAFEK</button>
+      <button id="tab-pracownicy" class="pb-2 text-gray-500 hover:text-blue-600 font-bold focus:outline-none" onclick="switchTab('pracownicy')">WIDOK PRACOWNIKÓW</button>
+    </div>
+
+    <div id="view-szafki" class="bg-white p-3 rounded shadow-md flex-1 flex flex-col overflow-hidden">
+      <div class="flex justify-between items-center mb-3 flex-shrink-0">
+        <div class="flex items-center gap-4">
+          <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded transition shadow font-bold" onclick="openSzafkaModal()">+ Dodaj Szafki</button>
+          
+          <button class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded transition shadow font-bold flex items-center gap-1" onclick="exportToExcel()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Eksportuj tabelę
+          </button>
+          
+          <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded transition shadow font-bold hidden" id="btn-delete-selected" onclick="deleteSelectedLockers()">- Usuń zaznaczone</button>
+        </div>
+      </div>
+      <div id="loading-szafki" class="text-center py-10 text-gray-500 flex-shrink-0"><div class="loader"></div> Pobieranie bazy szafek...</div>
+      
+      <div class="table-container border border-gray-200 rounded hidden flex-1 relative" id="table-szafki-container">
+        <table class="w-full text-left border-collapse min-w-max">
+          <thead id="table-szafki-head"></thead>
+          <tbody id="table-szafki-body" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-pracownicy" class="bg-white p-3 rounded shadow-md hidden flex-1 flex flex-col overflow-hidden">
+      <div class="flex items-center gap-4 mb-3 flex-shrink-0">
+        <h2 class="text-lg font-semibold text-gray-700">Rejestr pracowników</h2>
+      </div>
+      <div id="loading-pracownicy" class="text-center py-10 text-gray-500 flex-shrink-0"><div class="loader"></div> Ładowanie pracowników...</div>
+      
+      <div class="flex flex-row gap-2 flex-1 overflow-hidden hidden" id="pracownicy-content">
+        <div class="table-container border border-gray-200 rounded flex-1 bg-white">
+          <table class="w-full text-left border-collapse min-w-max">
+            <thead id="table-pracownicy-head"></thead>
+            <tbody id="table-pracownicy-body" class="divide-y divide-gray-200"></tbody>
+          </table>
+        </div>
+
+        <div id="drag-divider" class="w-2 bg-gray-300 hover:bg-blue-500 cursor-col-resize rounded flex-shrink-0 flex items-center justify-center group transition-colors">
+          <div class="h-8 w-1 bg-gray-400 group-hover:bg-white rounded"></div>
+        </div>
+
+        <div id="pracownicy-right-pane" class="bg-gray-50 border border-gray-200 rounded p-4 flex flex-col min-w-[250px] w-[350px] max-w-[60%] flex-shrink-0 h-full overflow-y-auto">
+          <h3 class="font-bold text-gray-700 mb-2 border-b pb-2">Karta pracownika</h3>
+          <div id="emp-panel-empty" class="text-gray-500 text-sm py-4 text-center">Wybierz pracownika z listy po lewej.</div>
+          
+          <div id="emp-panel-content" class="hidden flex-1 flex flex-col">
+            <div class="mb-4 flex-shrink-0">
+              <div id="emp-panel-name" class="font-bold text-lg text-blue-700"></div>
+              <div id="emp-panel-details" class="text-gray-600"></div>
+            </div>
+            <div class="flex justify-between items-center mb-2 flex-shrink-0">
+              <div class="font-semibold text-gray-700">Szafki pracownika:</div>
+              <button onclick="openAssignLockerModal()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">+ Przydziel</button>
+            </div>
+            <div class="border border-gray-300 rounded bg-white flex-1 overflow-y-auto">
+              <table class="w-full text-left whitespace-nowrap">
+                <tbody id="emp-panel-lockers-body" class="divide-y divide-gray-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="miejsca-list"></datalist>
+  <datalist id="dzialy-list"></datalist>
+
+  <div id="conflictModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center z-[70]">
+    <div class="bg-white rounded-lg p-6 w-[450px] shadow-2xl flex flex-col border-t-4 border-red-500">
+      <h2 class="text-xl font-bold mb-3 text-red-600 flex items-center gap-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        Odrzucono operację
+      </h2>
+      <p class="text-gray-800 font-semibold mb-2" id="conflict-message"></p>
+      <p class="text-sm text-gray-600 mb-6">Prawdopodobnie inna osoba zmodyfikowała te dane w międzyczasie. Czy chcesz odświeżyć tabele, aby pobrać najnowszy stan z bazy?</p>
+      <div class="flex justify-end gap-3">
+        <button class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded font-bold transition" onclick="closeModal('conflictModal')">Nie, anuluj</button>
+        <button class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded font-bold shadow transition" onclick="resolveConflict()">Tak, odśwież</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="szafkaModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-5 w-[650px] shadow-2xl max-h-[90vh] flex flex-col">
+      <h2 id="szafkaModalTitle" class="text-xl font-bold mb-4 border-b pb-2 text-gray-800">Dodaj szafki</h2>
+      <input type="hidden" id="szafka-id">
+      
+      <div class="grid grid-cols-2 gap-3 mb-4 flex-shrink-0">
+        <div class="col-span-2 sm:col-span-1">
+          <label class="block text-xs font-bold text-gray-600 mb-1">Miejsce (Wymagane)</label>
+          <input list="miejsca-list" id="sz-miejsce" class="w-full border rounded p-1.5 bg-yellow-50 border-yellow-300" placeholder="Wybierz lub wpisz nowe...">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Płeć docelowa</label>
+          <select id="sz-plec" class="w-full border rounded p-1.5">
+            <option>Męska</option><option>Damska</option><option>Neutralna</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Status</label>
+          <select id="sz-status" class="w-full border rounded p-1.5">
+            <option>Wolna</option><option>Zajęta</option><option>Nieczynna</option>
+          </select>
+        </div>
+        <div id="div-dzial" class="hidden">
+          <label class="block text-xs font-bold text-gray-600 mb-1">Dział szafki (Admin)</label>
+          <input list="dzialy-list" id="sz-dzial" class="w-full border rounded p-1.5" placeholder="Wybierz lub wpisz nowy...">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-bold text-gray-600 mb-1">Komentarz</label>
+          <input type="text" id="sz-koment" class="w-full border rounded p-1.5">
+        </div>
+      </div>
+
+      <div class="border border-gray-200 rounded p-2 bg-gray-50 flex-1 overflow-y-auto min-h-[150px]">
+        <div class="flex justify-between items-center mb-2 border-b pb-2">
+          <label class="text-sm font-bold text-blue-700">Wykaz szafek do dodania:</label>
+          <div class="flex gap-1" id="dynamic-controls">
+            <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-0.5 rounded font-bold" onclick="removeSzafkaRow()">-</button>
+            <button class="bg-green-500 hover:bg-green-600 text-white px-2 py-0.5 rounded font-bold" onclick="addSzafkaRow()">+</button>
+          </div>
+        </div>
+        <div id="dynamic-lockers-container" class="space-y-2"></div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-4 flex-shrink-0 pt-2 border-t">
+        <button class="bg-gray-200 px-4 py-1.5 rounded" onclick="closeModal('szafkaModal')">Anuluj</button>
+        <button id="btn-save-szafka" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-1.5 rounded font-bold shadow" onclick="saveSzafka()">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="assignLockerModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-5 w-[750px] shadow-2xl flex flex-col h-[80vh]">
+      <h2 class="text-xl font-bold mb-2 border-b pb-2 text-gray-800">Wybierz szafkę do przydziału</h2>
+      <p class="text-blue-700 font-semibold mb-3" id="modal-emp-info"></p>
+      <input type="text" id="search-free-lockers" onkeyup="filterFreeLockersTable()" class="w-full border-2 border-blue-300 rounded p-2 mb-3 bg-blue-50" placeholder="Szukaj po miejscu lub numerze...">
+      <div class="flex-1 overflow-auto border border-gray-200 rounded relative">
+        <table class="w-full text-left text-sm whitespace-nowrap table-fixed min-w-max">
+          <thead id="assign-locker-head"></thead>
+          <tbody id="free-lockers-tbody" class="divide-y divide-gray-100"></tbody>
+        </table>
+      </div>
+      <div class="flex justify-end mt-4"><button class="bg-gray-300 px-6 py-2 rounded font-bold" onclick="closeModal('assignLockerModal')">Zamknij</button></div>
+    </div>
+  </div>
+
+  <div id="assignEmpModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-5 w-[850px] shadow-2xl flex flex-col h-[85vh]">
+      <h2 class="text-xl font-bold mb-2 border-b pb-2 text-gray-800">Wybierz pracownika dla szafki</h2>
+      <p class="text-blue-700 font-semibold mb-3" id="modal-locker-info-emp"></p>
+      <input type="text" id="search-free-emps" onkeyup="filterFreeEmpsTable()" class="w-full border-2 border-blue-300 rounded p-2 mb-3 bg-blue-50" placeholder="Szukaj (np. Paweł Sprawy Osobowe)...">
+      <div class="flex-1 overflow-auto border border-gray-200 rounded relative">
+        <table class="w-full text-left text-sm whitespace-nowrap table-fixed min-w-max">
+          <thead id="assign-emp-head"></thead>
+          <tbody id="free-emps-tbody" class="divide-y divide-gray-100"></tbody>
+        </table>
+      </div>
+      <div class="flex justify-end mt-4"><button class="bg-gray-300 px-6 py-2 rounded font-bold" onclick="closeModal('assignEmpModal')">Zamknij</button></div>
+    </div>
+  </div>
+
+  <div id="adminStatsModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center z-[80]">
+    <div class="bg-white rounded-lg p-5 w-[1200px] max-w-[95vw] shadow-2xl flex flex-col h-[85vh] overflow-hidden">
+      
+      <div id="admin-stats-view" class="flex flex-col h-full overflow-hidden">
+        <h2 class="text-xl font-bold mb-4 border-b pb-2 text-gray-800 text-purple-700 flex-shrink-0">Aktywność Użytkowników <span class="text-sm font-normal text-gray-500">(Kliknij w wiersz, aby zobaczyć szczegóły)</span></h2>
+        <div class="flex-1 overflow-auto border border-gray-200 rounded relative">
+          <table class="w-full text-left text-sm whitespace-nowrap table-fixed min-w-max">
+            <thead id="admin-stats-head"></thead>
+            <tbody id="admin-stats-tbody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+        <div class="flex justify-end mt-4 flex-shrink-0">
+          <button class="bg-gray-300 hover:bg-gray-400 px-6 py-2 rounded font-bold transition" onclick="closeModal('adminStatsModal')">Zamknij</button>
+        </div>
+      </div>
+
+      <div id="admin-details-view" class="hidden flex-col h-full overflow-hidden">
+        <div class="flex justify-between items-center mb-4 border-b pb-2 flex-shrink-0">
+          <h2 class="text-xl font-bold text-gray-800 text-purple-700" id="admin-details-title">Szczegóły</h2>
+          <button class="bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded font-bold transition shadow-sm" onclick="showAdminStatsView()">Powrót do statystyk</button>
+        </div>
+        <div class="flex-1 overflow-auto border border-gray-200 rounded relative">
+          <table class="w-full text-left text-sm whitespace-nowrap table-fixed min-w-max">
+            <thead id="admin-details-head"></thead>
+            <tbody id="admin-details-tbody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // 2. Wstrzyknięcie zmiennej z kodem Base64 do tagu <img> w pasku nawigacji
+    document.getElementById('nav-logo').src = APP_LOGO_BASE64;
+
+    let currentUserAccess = null, szafkiData = [], pracownicyData = [];
+    let systemDicts = { miejsca: [], dzialy: [], plcie: [] };
+    let szafkiFilters = {}, pracownicyFilters = { 'Zatrudniony': 'tak' };
+    
+    let sortConfigSz = { col: null, asc: true };
+    let sortConfigPr = { col: null, asc: true };
+    let sortConfigEmpModal = { col: 'Nazwisko i Imię', asc: true };
+    let sortConfigLockerModal = { col: 'Miejsce', asc: true };
+    
+    let isPracownicyLoaded = false, selectedEmpCode = null, selectedEmpObj = null;
+    let targetLockerForEmp = null, targetLockerPlecForEmp = null;
+    
+    let currentFilteredSzafki = []; 
+
+    // --- Zmienne dla Modala Admina ---
+    let adminStatsData = [];
+    let adminRawLogs = [];
+    let currentDetailEmail = '';
+    let adminStatsFilters = {};
+    let sortConfigAdmin = { col: null, asc: true };
+    let adminDetailsFilters = {};
+    let sortConfigAdminDetails = { col: null, asc: true };
+
+    // STARTOWE SZEROKOŚCI KOLUMN
+    let defaultWidths = {
+      szafki: {
+        'CB': 30, 'Miejsce': 97, 'Nr szafki': 60, 'Nr zamka': 80,
+        'Płeć docelowa': 100, 'Kod pracownika': 80, 'Nazwisko': 160, 'Imię': 100,
+        'Stanowisko': 200, 'Dział pracownika': 150, 'Zatrudniony': 80,
+        'Status': 80, 'Komentarz': 200, 'Dział szafki': 80, 'Akcje': 108
+      },
+      pracownicy: {
+        'Kod': 80, 'Nazwisko': 120, 'Imię': 100, 'Dział': 150,
+        'Stanowisko': 150, 'Ilość szafek': 100, 'Zatrudniony': 100
+      },
+      assignEmp: {
+        'Kod': 80, 'Nazwisko i Imię': 180, 'Dział': 160, 'Stanowisko': 160, 'Płeć': 80, 'Akcja': 100
+      },
+      assignLocker: {
+        'Miejsce': 180, 'Nr': 80, 'Zamek': 100, 'Płeć': 100, 'Akcja': 100
+      },
+      adminStats: {
+        'Użytkownik': 220, 'Dział': 160, 'Rola': 90, 'Logowania': 100, 'Akcje': 90, 'Ostatnia Akcja (Data)': 220, 'Typ / Szczegóły': 280
+      },
+      adminDetails: {
+        'Data': 200, 'Typ': 150, 'Szafka ID': 100, 'Szczegóły': 500
+      }
+    };
+    
+    let columnWidths = { 
+        szafki: {...defaultWidths.szafki}, 
+        pracownicy: {...defaultWidths.pracownicy},
+        assignEmp: {...defaultWidths.assignEmp},
+        assignLocker: {...defaultWidths.assignLocker},
+        adminStats: {...defaultWidths.adminStats},
+        adminDetails: {...defaultWidths.adminDetails}
+    };
+
+    function initResizers(tableType) {
+      let headId = '';
+      if(tableType === 'szafki') headId = 'table-szafki-head';
+      else if(tableType === 'pracownicy') headId = 'table-pracownicy-head';
+      else if(tableType === 'assignEmp') headId = 'assign-emp-head';
+      else if(tableType === 'assignLocker') headId = 'assign-locker-head';
+      else if(tableType === 'adminStats') headId = 'admin-stats-head';
+      else if(tableType === 'adminDetails') headId = 'admin-details-head';
+
+      const ths = document.querySelectorAll(`#${headId} tr:first-child th`);
+      ths.forEach(th => {
+        const resizer = th.querySelector('.resizer');
+        if (!resizer) return; 
+        let x = 0, w = 0, colName = th.getAttribute('data-col');
+
+        const mouseDownHandler = function(e) {
+          x = e.clientX; w = th.offsetWidth;
+          document.addEventListener('mousemove', mouseMoveHandler);
+          document.addEventListener('mouseup', mouseUpHandler);
+          resizer.classList.add('is-resizing');
+          e.stopPropagation(); 
+        };
+        const mouseMoveHandler = function(e) {
+          const dx = e.clientX - x;
+          const newWidth = Math.max(40, w + dx); 
+          th.style.width = `${newWidth}px`; th.style.minWidth = `${newWidth}px`; th.style.maxWidth = `${newWidth}px`;
+        };
+        const mouseUpHandler = function() {
+          document.removeEventListener('mousemove', mouseMoveHandler);
+          document.removeEventListener('mouseup', mouseUpHandler);
+          resizer.classList.remove('is-resizing');
+          columnWidths[tableType][colName] = th.offsetWidth;
+          
+          if(tableType === 'szafki') applySzafkiFilters();
+          if(tableType === 'pracownicy') applyPracownicyFilters();
+          if(tableType === 'assignEmp') filterFreeEmpsTable();
+          if(tableType === 'assignLocker') filterFreeLockersTable();
+          if(tableType === 'adminStats') applyAdminStatsFilters();
+          if(tableType === 'adminDetails') applyAdminDetailsFilters();
+        };
+        resizer.addEventListener('mousedown', mouseDownHandler);
+      });
+    }
+
+    const divider = document.getElementById('drag-divider');
+    const rightPane = document.getElementById('pracownicy-right-pane');
+    let isDragging = false;
+
+    divider.addEventListener('mousedown', function(e) {
+      isDragging = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      const containerRect = document.getElementById('pracownicy-content').getBoundingClientRect();
+      const newWidth = containerRect.right - e.clientX - 10;
+      if (newWidth >= 250 && newWidth <= containerRect.width * 0.6) rightPane.style.width = newWidth + 'px';
+    });
+    document.addEventListener('mouseup', function(e) {
+      if (isDragging) { isDragging = false; document.body.style.cursor = 'default'; document.body.style.userSelect = ''; }
+    });
+
+    function showConflictModal(msg) {
+        document.getElementById('conflict-message').innerText = msg;
+        document.getElementById('conflictModal').classList.remove('hidden');
+    }
+
+    function resolveConflict() {
+       closeModal('conflictModal');
+       closeModal('assignEmpModal');
+       closeModal('assignLockerModal');
+       closeModal('szafkaModal');
+       
+       document.getElementById('table-szafki-container').classList.add('hidden'); 
+       document.getElementById('loading-szafki').classList.remove('hidden');
+       
+       google.script.run.withSuccessHandler(res => {
+           onSzafkiLoaded(res);
+           if (isPracownicyLoaded) {
+               document.getElementById('pracownicy-content').classList.add('hidden');
+               document.getElementById('loading-pracownicy').classList.remove('hidden');
+               google.script.run.withSuccessHandler(data => {
+                   pracownicyData = data;
+                   calculateLockerCounts();
+                   renderPracownicyTableHeaders();
+                   applyPracownicyFilters();
+                   if(selectedEmpCode) renderEmployeeLockersPanel();
+               }).withFailureHandler(e => alert(e.message)).getPracownicyData();
+           }
+       }).withFailureHandler(e => alert(e.message)).getSzafkiData();
+    }
+
+    function getZatrudnionyStatus(val, kod) {
+      if (!kod) return ''; 
+      if (val === true || val === 'TRUE' || val === 'True' || val === 'tak' || val === 'Tak') return 'Tak';
+      return 'Nie';
+    }
+
+    window.onload = function() {
+      google.script.run.logAppOpen();
+      
+      google.script.run.withSuccessHandler(onSzafkiLoaded).withFailureHandler(e => alert(e.message)).getSzafkiData();
+      google.script.run.withSuccessHandler(res => {
+         systemDicts = res;
+         document.getElementById('miejsca-list').innerHTML = systemDicts.miejsca.map(m => `<option value="${m}">`).join('');
+         document.getElementById('dzialy-list').innerHTML = systemDicts.dzialy.map(d => `<option value="${d}">`).join('');
+      }).getDictionaries();
+    };
+
+    // ==========================================
+    // LOGI ADMINA
+    // ==========================================
+    function openAdminStatsModal() {
+      document.getElementById('admin-stats-tbody').innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Pobieranie logów z serwera...</td></tr>';
+      showAdminStatsView();
+      document.getElementById('adminStatsModal').classList.remove('hidden');
+
+      google.script.run.withSuccessHandler(data => {
+        // Pakiety ze statystykami i surowymi logami
+        adminRawLogs = data.rawLogs;
+        
+        adminStatsData = data.stats.map(u => ({
+           'Użytkownik': u.email,
+           'Dział': u.dzial,
+           'Rola': u.rola,
+           'Logowania': u.logins,
+           'Akcje': u.actions,
+           'Ostatnia Akcja (Data)': u.data,
+           'Typ': u.typ,
+           'Szczegóły': u.szczegoly,
+           'Typ / Szczegóły': u.typ + ' ' + u.szczegoly
+        }));
+        
+        renderAdminStatsTableHeaders();
+        applyAdminStatsFilters();
+      }).withFailureHandler(e => {
+         document.getElementById('admin-stats-tbody').innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">${e.message}</td></tr>`;
+      }).getAdminActivity();
+    }
+    
+    function showAdminStatsView() {
+      // Przywracamy właściwy tryb renderowania dla Tailwind (flex zamiast block)
+      document.getElementById('admin-details-view').classList.remove('flex');
+      document.getElementById('admin-details-view').classList.add('hidden');
+      
+      document.getElementById('admin-stats-view').classList.remove('hidden');
+      document.getElementById('admin-stats-view').classList.add('flex');
+    }
+
+    function renderAdminStatsTableHeaders() {
+      const cols = ['Użytkownik', 'Dział', 'Rola', 'Logowania', 'Akcje', 'Ostatnia Akcja (Data)', 'Typ / Szczegóły'];
+      let h1 = '<tr>';
+      cols.forEach(col => {
+        let wStyle = `style="width:${columnWidths.adminStats[col]}px; min-width:${columnWidths.adminStats[col]}px; max-width:${columnWidths.adminStats[col]}px;"`;
+        let icon = sortConfigAdmin.col === col ? (sortConfigAdmin.asc ? ' ↑' : ' ↓') : ' ↕';
+
+        h1 += `<th class="px-2 py-2 relative bg-gray-100 border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortAdminStats('${col}')">
+                 <div class="flex items-center justify-between gap-1">
+                   <span class="truncate">${col}</span>
+                   <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
+                 </div>
+                 <div class="resizer" onclick="event.stopPropagation()"></div>
+               </th>`;
+      });
+      h1 += '</tr><tr class="filter-row border-b shadow-sm">';
+      cols.forEach(col => {
+        h1 += `<th class="px-2 py-1.5 border-r border-gray-200"><input type="text" class="w-full border rounded text-xs p-1" placeholder="Filtruj..." value="${adminStatsFilters[col]||''}" onkeyup="adminStatsFilters['${col}']=this.value.toLowerCase(); applyAdminStatsFilters()"></th>`;
+      });
+      h1 += '</tr>';
+      document.getElementById('admin-stats-head').innerHTML = h1;
+      initResizers('adminStats');
+    }
+
+    function sortAdminStats(col) {
+      if(sortConfigAdmin.col === col) sortConfigAdmin.asc = !sortConfigAdmin.asc; 
+      else { sortConfigAdmin.col = col; sortConfigAdmin.asc = true; }
+      renderAdminStatsTableHeaders(); 
+      applyAdminStatsFilters();
+    }
+
+    function applyAdminStatsFilters() {
+      let f = adminStatsData.filter(row => {
+        for (let key in adminStatsFilters) {
+          if (!adminStatsFilters[key]) continue;
+          let fVal = adminStatsFilters[key];
+          if(!(row[key]||'').toString().toLowerCase().includes(fVal)) return false;
+        }
+        return true;
+      });
+
+      if(sortConfigAdmin.col) {
+        f.sort((a,b) => {
+          let va = a[sortConfigAdmin.col], vb = b[sortConfigAdmin.col];
+          if(sortConfigAdmin.col === 'Logowania' || sortConfigAdmin.col === 'Akcje') { 
+              va = parseInt(va)||0; vb = parseInt(vb)||0; 
+          }
+          if(!isNaN(va) && !isNaN(vb)) return sortConfigAdmin.asc ? va-vb : vb-va;
+          return sortConfigAdmin.asc ? va.toString().localeCompare(vb) : vb.toString().localeCompare(va);
+        });
+      }
+
+      let html = '';
+      const cols = ['Użytkownik', 'Dział', 'Rola', 'Logowania', 'Akcje', 'Ostatnia Akcja (Data)', 'Typ / Szczegóły'];
+
+      f.forEach(u => {
+        let rolaClass = u['Rola'] === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+        
+        html += `<tr class="hover:bg-purple-100 border-b cursor-pointer transition-colors" onclick="openUserLogs('${u['Użytkownik']}')">`;
+        
+        cols.forEach(col => {
+          let val = u[col];
+          let cw = columnWidths.adminStats[col];
+          
+          if(col === 'Użytkownik') {
+            html += `<td class="p-2 font-bold text-gray-700 truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;" title="${val}">${val}</td>`;
+          } else if(col === 'Rola') {
+            html += `<td class="p-2 text-center truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;"><span class="px-2 py-0.5 rounded text-xs ${rolaClass}">${val}</span></td>`;
+          } else if(col === 'Logowania') {
+            html += `<td class="p-2 text-center font-bold text-gray-600 truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;">${val}</td>`;
+          } else if(col === 'Akcje') {
+            html += `<td class="p-2 text-center font-bold text-purple-700 truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;">${val}</td>`;
+          } else if(col === 'Ostatnia Akcja (Data)') {
+            html += `<td class="p-2 font-semibold text-blue-700 truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;" title="${val}">${val}</td>`;
+          } else if(col === 'Typ / Szczegóły') {
+            html += `<td class="p-2 truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;" title="${val}"><span class="font-bold text-gray-600">${u['Typ']}</span><br><span class="text-xs text-gray-500">${u['Szczegóły']}</span></td>`;
+          } else {
+            html += `<td class="p-2 truncate" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;" title="${val}">${val}</td>`;
+          }
+        });
+        html += `</tr>`;
+      });
+      
+      if(f.length === 0) html = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Brak logów pasujących do filtra.</td></tr>';
+      document.getElementById('admin-stats-tbody').innerHTML = html;
+    }
+
+    // --- SZCZEGÓŁOWE LOGI KONKRETNEGO UŻYTKOWNIKA ---
+    function openUserLogs(email) {
+      currentDetailEmail = email.toLowerCase();
+      
+      // Przywracamy właściwy tryb renderowania dla Tailwind (flex zamiast block)
+      document.getElementById('admin-stats-view').classList.remove('flex');
+      document.getElementById('admin-stats-view').classList.add('hidden');
+      
+      document.getElementById('admin-details-view').classList.remove('hidden');
+      document.getElementById('admin-details-view').classList.add('flex');
+      
+      document.getElementById('admin-details-title').innerText = `Logi aktywności: ${email}`;
+      
+      adminDetailsFilters = {};
+      sortConfigAdminDetails = { col: null, asc: true };
+      
+      renderAdminDetailsTableHeaders();
+      applyAdminDetailsFilters();
+    }
+
+    function renderAdminDetailsTableHeaders() {
+      const cols = ['Data', 'Typ', 'Szafka ID', 'Szczegóły'];
+      let h1 = '<tr>';
+      cols.forEach(col => {
+        let wStyle = `style="width:${columnWidths.adminDetails[col]}px; min-width:${columnWidths.adminDetails[col]}px; max-width:${columnWidths.adminDetails[col]}px;"`;
+        let icon = sortConfigAdminDetails.col === col ? (sortConfigAdminDetails.asc ? ' ↑' : ' ↓') : ' ↕';
+
+        h1 += `<th class="px-2 py-2 relative bg-gray-100 border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortAdminDetails('${col}')">
+                 <div class="flex items-center justify-between gap-1">
+                   <span class="truncate">${col}</span>
+                   <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
+                 </div>
+                 <div class="resizer" onclick="event.stopPropagation()"></div>
+               </th>`;
+      });
+      h1 += '</tr><tr class="filter-row border-b shadow-sm">';
+      cols.forEach(col => {
+        h1 += `<th class="px-2 py-1.5 border-r border-gray-200"><input type="text" class="w-full border rounded text-xs p-1" placeholder="Filtruj..." value="${adminDetailsFilters[col]||''}" onkeyup="adminDetailsFilters['${col}']=this.value.toLowerCase(); applyAdminDetailsFilters()"></th>`;
+      });
+      h1 += '</tr>';
+      document.getElementById('admin-details-head').innerHTML = h1;
+      initResizers('adminDetails');
+    }
+
+    function sortAdminDetails(col) {
+      if(sortConfigAdminDetails.col === col) sortConfigAdminDetails.asc = !sortConfigAdminDetails.asc; 
+      else { sortConfigAdminDetails.col = col; sortConfigAdminDetails.asc = true; }
+      renderAdminDetailsTableHeaders(); 
+      applyAdminDetailsFilters();
+    }
+
+    function applyAdminDetailsFilters() {
+      let userLogs = adminRawLogs.filter(r => r.email === currentDetailEmail);
+      
+      let f = userLogs.filter(row => {
+        for (let key in adminDetailsFilters) {
+          if (!adminDetailsFilters[key]) continue;
+          let fVal = adminDetailsFilters[key];
+          
+          let rVal = '';
+          if(key === 'Data') rVal = row.data;
+          else if(key === 'Typ') rVal = row.typ;
+          else if(key === 'Szafka ID') rVal = row.idSzafki;
+          else if(key === 'Szczegóły') rVal = row.szczegoly;
+          
+          if(!(rVal||'').toString().toLowerCase().includes(fVal)) return false;
+        }
+        return true;
+      });
+
+      if(sortConfigAdminDetails.col) {
+        f.sort((a,b) => {
+          let va = '', vb = '';
+          let c = sortConfigAdminDetails.col;
+          if(c === 'Data') { va = a.data; vb = b.data; }
+          else if(c === 'Typ') { va = a.typ; vb = b.typ; }
+          else if(c === 'Szafka ID') { va = a.idSzafki; vb = b.idSzafki; }
+          else if(c === 'Szczegóły') { va = a.szczegoly; vb = b.szczegoly; }
+          
+          if(c === 'Szafka ID') { va = parseInt(va)||0; vb = parseInt(vb)||0; }
+
+          if(!isNaN(va) && !isNaN(vb)) return sortConfigAdminDetails.asc ? va-vb : vb-va;
+          return sortConfigAdminDetails.asc ? va.toString().localeCompare(vb) : vb.toString().localeCompare(va);
+        });
+      }
+
+      let html = '';
+      const cols = ['Data', 'Typ', 'Szafka ID', 'Szczegóły'];
+      
+      f.forEach(r => {
+        html += `<tr class="hover:bg-purple-50 border-b">`;
+        cols.forEach(col => {
+          let val = '';
+          if(col === 'Data') val = r.data;
+          else if(col === 'Typ') val = r.typ;
+          else if(col === 'Szafka ID') val = r.idSzafki == 0 ? '-' : r.idSzafki;
+          else if(col === 'Szczegóły') val = r.szczegoly;
+          
+          let cw = columnWidths.adminDetails[col];
+          let style = col === 'Typ' ? 'font-bold text-gray-700' : 'text-gray-600';
+          if(col === 'Data') style = 'font-semibold text-blue-700';
+
+          html += `<td class="p-2 truncate border-r ${style}" style="width:${cw}px; min-width:${cw}px; max-width:${cw}px;" title="${val}">${val}</td>`;
+        });
+        html += `</tr>`;
+      });
+      
+      if(f.length === 0) html = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Brak logów.</td></tr>';
+      document.getElementById('admin-details-tbody').innerHTML = html;
+    }
+
+    // ==========================================
+    // EKSPORT DO EXCELA (CSV)
+    // ==========================================
+    function exportToExcel() {
+      if (!currentFilteredSzafki || currentFilteredSzafki.length === 0) {
+        alert('Brak danych do wyeksportowania! Tabela jest pusta.');
+        return;
+      }
+
+      let cols = ['Miejsce', 'Nr szafki', 'Nr zamka', 'Płeć docelowa', 'Kod pracownika', 'Nazwisko', 'Imię', 'Stanowisko', 'Dział pracownika', 'Zatrudniony', 'Status', 'Komentarz'];
+      if (currentUserAccess.role === 'admin') cols.push('Dział szafki');
+
+      let csvContent = '\uFEFF'; 
+      csvContent += cols.join(';') + '\n';
+
+      currentFilteredSzafki.forEach(row => {
+        let rowData = cols.map(col => {
+          let val = row[col] || '';
+          if (col === 'Zatrudniony') val = getZatrudnionyStatus(row['Zatrudniony'], row['Kod pracownika']);
+          val = val.toString().replace(/"/g, '""');
+          if (val.includes(';') || val.includes('\n')) val = `"${val}"`;
+          return val;
+        });
+        csvContent += rowData.join(';') + '\n';
+      });
+
+      let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      let link = document.createElement('a');
+      let url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      let dateStr = new Date().toISOString().slice(0,10);
+      link.setAttribute('download', `Szafki_Eksport_${dateStr}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ==========================================
+    // SZAFKI WIDOK
+    // ==========================================
+    function onSzafkiLoaded(res) {
+      if (!res.success) { document.getElementById('loading-szafki').innerHTML = `<b class="text-red-500">${res.message}</b>`; return; }
+      currentUserAccess = res.access; szafkiData = res.data;
+      document.getElementById('userInfo').innerText = `${res.access.email} | ${res.access.dzial} | ${res.access.role === 'admin'?'Admin':'User'}`;
+      
+      if (res.access.role === 'admin') {
+          document.getElementById('btn-admin-stats').classList.remove('hidden');
+      }
+      
+      if(isPracownicyLoaded) calculateLockerCounts(); 
+      if(selectedEmpCode) renderEmployeeLockersPanel(); 
+
+      renderSzafkiTableHeaders();
+      applySzafkiFilters();
+    }
+
+    function renderSzafkiTableHeaders() {
+      let columns = ['CB', 'Miejsce', 'Nr szafki', 'Nr zamka', 'Płeć docelowa', 'Kod pracownika', 'Nazwisko', 'Imię', 'Stanowisko', 'Dział pracownika', 'Zatrudniony', 'Status', 'Komentarz'];
+      if (currentUserAccess.role === 'admin') columns.push('Dział szafki');
+      columns.push('Akcje'); 
+
+      let h1 = '<tr class="text-gray-600 border-b bg-gray-50">';
+      columns.forEach(col => {
+        let wStyle = `style="width:${columnWidths.szafki[col]}px; min-width:${columnWidths.szafki[col]}px; max-width:${columnWidths.szafki[col]}px;"`;
+        let icon = sortConfigSz.col === col ? (sortConfigSz.asc ? ' ↑' : ' ↓') : ' ↕';
+        
+        if (col === 'CB') {
+          h1 += `<th class="px-2 py-2 text-center" ${wStyle} data-col="${col}"><input type="checkbox" id="selectAll" class="w-4 h-4" onclick="toggleAllLockers(this)"><div class="resizer" onclick="event.stopPropagation()"></div></th>`;
+        } else if (col === 'Akcje') {
+          h1 += `<th class="px-3 py-2 sticky-right text-center" ${wStyle}>Akcje</th>`;
+        } else {
+          h1 += `<th class="px-3 py-2 relative bg-gray-50 border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortSzafki('${col}')">
+                   <div class="flex items-center justify-between gap-2">
+                     <span class="truncate">${col}</span>
+                     <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
+                   </div>
+                   <div class="resizer" onclick="event.stopPropagation()"></div>
+                 </th>`;
+        }
+      });
+      
+      h1 += '</tr><tr class="filter-row border-b shadow-sm">';
+      columns.forEach(col => {
+        if(col === 'CB') h1 += `<th class="border-r border-gray-200"></th>`;
+        else if(col === 'Akcje') h1 += `<th class="sticky-right border-b border-gray-200"></th>`;
+        else if(col === 'Zatrudniony') {
+           h1 += `<th class="px-2 py-1.5 border-r border-gray-200">
+                    <select class="w-full border rounded text-xs p-1 h-[26px]" onchange="szafkiFilters['${col}']=this.value; applySzafkiFilters()">
+                      <option value="">Wszyscy</option>
+                      <option value="tak" ${szafkiFilters[col]==='tak'?'selected':''}>Tak</option>
+                      <option value="nie" ${szafkiFilters[col]==='nie'?'selected':''}>Nie</option>
+                    </select>
+                  </th>`;
+        }
+        else h1 += `<th class="px-2 py-1.5 border-r border-gray-200"><input type="text" class="w-full border rounded text-xs p-1" placeholder="Filtruj..." value="${szafkiFilters[col]||''}" onkeyup="szafkiFilters['${col}']=this.value.toLowerCase(); applySzafkiFilters()"></th>`;
+      });
+      h1 += '</tr>';
+      
+      document.getElementById('table-szafki-head').innerHTML = h1;
+      initResizers('szafki');
+      document.getElementById('loading-szafki').classList.add('hidden');
+      document.getElementById('table-szafki-container').classList.remove('hidden');
+    }
+
+    function sortSzafki(col) {
+      if(sortConfigSz.col === col) sortConfigSz.asc = !sortConfigSz.asc; else { sortConfigSz.col = col; sortConfigSz.asc = true; }
+      renderSzafkiTableHeaders(); applySzafkiFilters();
+    }
+
+    function applySzafkiFilters() {
+      let f = szafkiData.filter(row => {
+        let empStatus = getZatrudnionyStatus(row['Zatrudniony'], row['Kod pracownika']);
+        
+        for (let key in szafkiFilters) {
+          if (!szafkiFilters[key]) continue;
+          let filterVal = szafkiFilters[key];
+          
+          if(key === 'Zatrudniony') {
+             if (filterVal === 'tak' && empStatus !== 'Tak') return false;
+             if (filterVal === 'nie' && empStatus !== 'Nie') return false;
+          } else {
+             if (!(row[key]||'').toString().toLowerCase().includes(filterVal)) return false;
+          }
+        }
+        return true;
+      });
+
+      if(sortConfigSz.col) {
+        f.sort((a,b) => {
+          let va = a[sortConfigSz.col]||'', vb = b[sortConfigSz.col]||'';
+          if(sortConfigSz.col === 'Zatrudniony') { va = getZatrudnionyStatus(a['Zatrudniony'], a['Kod pracownika']); vb = getZatrudnionyStatus(b['Zatrudniony'], b['Kod pracownika']); }
+          if(!isNaN(va) && !isNaN(vb)) return sortConfigSz.asc ? va-vb : vb-va;
+          return sortConfigSz.asc ? va.toString().localeCompare(vb) : vb.toString().localeCompare(va);
+        });
+      }
+
+      currentFilteredSzafki = f;
+
+      let bodyHtml = '';
+      let colsToRender = ['Miejsce', 'Nr szafki', 'Nr zamka', 'Płeć docelowa', 'Kod pracownika', 'Nazwisko', 'Imię', 'Stanowisko', 'Dział pracownika', 'Zatrudniony', 'Status', 'Komentarz'];
+      if (currentUserAccess.role === 'admin') colsToRender.push('Dział szafki');
+      
+      f.forEach(row => {
+        let isFr = row['Status'] === 'Wolna';
+        let bClass = isFr ? 'bg-green-100 text-green-800' : (row['Status']==='Nieczynna'?'bg-gray-200 text-gray-600':'bg-red-100 text-red-800');
+        let empStatus = getZatrudnionyStatus(row['Zatrudniony'], row['Kod pracownika']);
+        
+        let act = '';
+        if (row['Status'] === 'Wolna') {
+            act = `<button onclick="openAssignEmpModal('${row['ID']}', '${row['Płeć docelowa']}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs shadow hover:bg-blue-600 ml-1">Przydziel</button>`;
+        } else if (row['Status'] === 'Zajęta') {
+            act = `<button onclick="releaseLocker('${row['ID']}', this)" class="bg-red-500 text-white px-2 py-1 rounded text-xs shadow hover:bg-red-600 ml-1">Zwolnij</button>`;
+        }
+        
+        let actCol = `<div class="flex justify-end items-center h-full pr-1"><button onclick='openSzafkaModal(${JSON.stringify(row)})' class="bg-gray-200 px-2 py-1 rounded text-xs hover:bg-gray-300 border border-gray-300 shadow-sm">Edytuj</button>${act}</div>`;
+
+        let isRowFired = (empStatus === 'Nie' && !isFr);
+        let rowAlertClass = isRowFired ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-blue-50';
+        let textClass = isRowFired ? 'text-red-600 font-bold' : 'text-gray-700';
+
+        bodyHtml += `<tr class="border-b ${rowAlertClass}">`;
+        
+        let cwCB = columnWidths.szafki['CB'];
+        bodyHtml += `<td class="px-2 py-1.5 text-center" style="width:${cwCB}px; min-width:${cwCB}px; max-width:${cwCB}px;"><input type="checkbox" class="locker-cb w-4 h-4 cursor-pointer" value="${row['ID']}" onchange="checkDeleteBtn()"></td>`;
+
+        colsToRender.forEach(col => {
+           let val = row[col] || '';
+           if(col === 'Status') {
+               val = `<span class="px-2 py-0.5 rounded text-xs font-bold ${bClass}">${row[col]}</span>`;
+           } else if(col === 'Zatrudniony') {
+               if (empStatus !== '') {
+                   val = `<div class="flex items-center"><input type="checkbox" disabled class="w-4 h-4 cursor-not-allowed" ${empStatus === 'Tak' ? 'checked' : ''}></div>`;
+               }
+           }
+           
+           let colWidth = columnWidths.szafki[col];
+           bodyHtml += `<td class="px-3 py-1.5 ${textClass}" style="width:${colWidth}px; min-width:${colWidth}px; max-width:${colWidth}px;" title="${(row[col]||'').toString().replace(/"/g, "'")}">${val}</td>`;
+        });
+        
+        let cwAct = columnWidths.szafki['Akcje'];
+        bodyHtml += `<td class="sticky-right border-b border-gray-200" style="width:${cwAct}px; min-width:${cwAct}px; max-width:${cwAct}px;">${actCol}</td></tr>`;
+      });
+      
+      document.getElementById('table-szafki-body').innerHTML = bodyHtml;
+      checkDeleteBtn(); 
+    }
+
+    function releaseLocker(lockerId, btn) {
+      if(!confirm("Czy na pewno chcesz zwolnić szafkę?")) return;
+      
+      let origText = "";
+      if (btn) {
+          origText = btn.innerText;
+          btn.innerText = "Czekaj...";
+          btn.disabled = true;
+      } else {
+          document.getElementById('table-szafki-container').classList.add('hidden'); 
+          document.getElementById('loading-szafki').classList.remove('hidden');
+      }
+
+      google.script.run
+        .withSuccessHandler(res => {
+           if(res && res.success === false) { 
+               if(btn) { btn.innerText = origText; btn.disabled = false; }
+               showConflictModal(res.message); 
+               return; 
+           }
+           
+           let sz = szafkiData.find(s => s['ID'].toString() === lockerId.toString());
+           if(sz) {
+               let oldKod = sz['Kod pracownika'];
+               sz['Status'] = 'Wolna';
+               sz['Kod pracownika'] = '';
+               sz['Nazwisko'] = '';
+               sz['Imię'] = '';
+               sz['Dział pracownika'] = '';
+               sz['Stanowisko'] = '';
+               sz['Zatrudniony'] = '';
+               sz['Zmiana'] = ''; 
+               
+               if(isPracownicyLoaded && oldKod) {
+                   let emp = pracownicyData.find(p => p['Kod'] === oldKod);
+                   if(emp && emp['Ilość szafek'] > 0) {
+                       emp['Ilość szafek']--;
+                       if (emp['Ilość szafek'] === 0 && getZatrudnionyStatus(emp['Zatrudniony'], emp['Kod']) === 'Nie') {
+                           pracownicyData = pracownicyData.filter(p => p['Kod'] !== oldKod);
+                           if (selectedEmpCode === oldKod) {
+                               selectedEmpCode = null;
+                               selectedEmpObj = null;
+                               document.getElementById('emp-panel-empty').classList.remove('hidden');
+                               document.getElementById('emp-panel-content').classList.add('hidden');
+                           }
+                       }
+                   }
+               }
+           }
+           
+           document.getElementById('loading-szafki').classList.add('hidden');
+           document.getElementById('table-szafki-container').classList.remove('hidden');
+           
+           applySzafkiFilters();
+           if(isPracownicyLoaded) applyPracownicyFilters();
+           if(selectedEmpCode) renderEmployeeLockersPanel();
+        })
+        .withFailureHandler(e => { 
+            if(btn) { btn.innerText = origText; btn.disabled = false; }
+            document.getElementById('loading-szafki').classList.add('hidden');
+            document.getElementById('table-szafki-container').classList.remove('hidden');
+            showConflictModal(e.message);
+        })
+        .zwolnijSzafke(lockerId);
+    }
+
+    function toggleAllLockers(source) {
+      let checkboxes = document.querySelectorAll('.locker-cb');
+      checkboxes.forEach(cb => cb.checked = source.checked);
+      checkDeleteBtn();
+    }
+    
+    function checkDeleteBtn() {
+      let checked = document.querySelectorAll('.locker-cb:checked').length;
+      let btn = document.getElementById('btn-delete-selected');
+      if (checked > 0) {
+        btn.classList.remove('hidden');
+        btn.innerText = `- Usuń zaznaczone (${checked})`;
+      } else {
+        btn.classList.add('hidden');
+      }
+    }
+    
+    function deleteSelectedLockers() {
+      let checked = document.querySelectorAll('.locker-cb:checked');
+      if(checked.length === 0) return;
+      if(!confirm(`Czy na pewno chcesz usunąć TRWALE ${checked.length} szafek? Tej operacji nie można cofnąć.`)) return;
+
+      let btn = document.getElementById('btn-delete-selected');
+      let origText = btn.innerText;
+      btn.innerText = "Usuwanie...";
+      btn.disabled = true;
+
+      let ids = Array.from(checked).map(cb => cb.value);
+      document.getElementById('table-szafki-container').classList.add('hidden');
+      document.getElementById('loading-szafki').classList.remove('hidden');
+
+      google.script.run
+        .withSuccessHandler(res => {
+           btn.innerText = origText; btn.disabled = false;
+           if(res && res.success === false) { showConflictModal(res.message); return; }
+           
+           szafkiData = szafkiData.filter(s => !ids.includes(s['ID'].toString()));
+           if (isPracownicyLoaded) calculateLockerCounts();
+           
+           document.getElementById('loading-szafki').classList.add('hidden');
+           document.getElementById('table-szafki-container').classList.remove('hidden');
+           applySzafkiFilters();
+           if(isPracownicyLoaded) applyPracownicyFilters();
+           if(selectedEmpCode) renderEmployeeLockersPanel();
+        })
+        .withFailureHandler(e => { 
+            btn.innerText = origText; btn.disabled = false;
+            document.getElementById('loading-szafki').classList.add('hidden');
+            document.getElementById('table-szafki-container').classList.remove('hidden');
+            showConflictModal(e.message);
+        })
+        .usunSzafki(ids);
+    }
+
+    // ==========================================
+    // PRACOWNICY WIDOK
+    // ==========================================
+    function loadPracownicy() {
+      if(isPracownicyLoaded) { applyPracownicyFilters(); return; }
+      google.script.run.withSuccessHandler(data => {
+        pracownicyData = data;
+        isPracownicyLoaded = true;
+        calculateLockerCounts(); 
+        renderPracownicyTableHeaders();
+        applyPracownicyFilters();
+      }).withFailureHandler(e => alert(e.message)).getPracownicyData();
+    }
+
+    function calculateLockerCounts() {
+      pracownicyData.forEach(p => p['Ilość szafek'] = 0);
+      szafkiData.forEach(sz => {
+        if(sz['Kod pracownika']) {
+          let p = pracownicyData.find(pr => pr['Kod'] === sz['Kod pracownika']);
+          if(p) p['Ilość szafek']++;
+        }
+      });
+      pracownicyData = pracownicyData.filter(p => {
+         let empStatus = getZatrudnionyStatus(p['Zatrudniony'], p['Kod']);
+         return !(empStatus === 'Nie' && p['Ilość szafek'] === 0);
+      });
+    }
+
+    function renderPracownicyTableHeaders() {
+      const cols = ['Kod', 'Nazwisko', 'Imię', 'Dział', 'Stanowisko', 'Ilość szafek', 'Zatrudniony'];
+      let h1 = '<tr class="text-gray-600 border-b bg-gray-50">';
+      cols.forEach(col => {
+        let icon = sortConfigPr.col === col ? (sortConfigPr.asc ? ' ↑' : ' ↓') : ' ↕';
+        let wStyle = `style="width:${columnWidths.pracownicy[col]}px; min-width:${columnWidths.pracownicy[col]}px; max-width:${columnWidths.pracownicy[col]}px;"`;
+        
+        h1 += `<th class="px-3 py-2 relative border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortPracownicy('${col}')">
+                 <div class="flex items-center justify-between gap-2">
+                   <span class="truncate">${col}</span>
+                   <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
+                 </div>
+                 <div class="resizer" onclick="event.stopPropagation()"></div>
+               </th>`;
+      });
+      h1 += '</tr><tr class="filter-row border-b shadow-sm">';
+      cols.forEach(col => {
+        let ph = col==='Ilość szafek' ? 'np. * lub >0' : 'Filtruj...';
+        if(col === 'Zatrudniony') {
+           h1 += `<th class="px-2 py-1.5 border-r border-gray-200">
+                    <select class="w-full border rounded text-xs p-1 h-[26px]" onchange="pracownicyFilters['${col}']=this.value; applyPracownicyFilters()">
+                      <option value="">Wszyscy</option>
+                      <option value="tak" ${pracownicyFilters[col]==='tak'?'selected':''}>Tak</option>
+                      <option value="nie" ${pracownicyFilters[col]==='nie'?'selected':''}>Nie</option>
+                    </select>
+                  </th>`;
+        } else {
+           h1 += `<th class="px-2 py-1.5 border-r border-gray-200"><input type="text" class="w-full border rounded text-xs p-1" placeholder="${ph}" value="${pracownicyFilters[col]||''}" onkeyup="pracownicyFilters['${col}']=this.value.toLowerCase(); applyPracownicyFilters()"></th>`;
+        }
+      });
+      h1 += '</tr>';
+      document.getElementById('table-pracownicy-head').innerHTML = h1;
+      initResizers('pracownicy'); 
+      document.getElementById('loading-pracownicy').classList.add('hidden');
+      document.getElementById('pracownicy-content').classList.remove('hidden');
+    }
+
+    function sortPracownicy(col) {
+      if(sortConfigPr.col === col) sortConfigPr.asc = !sortConfigPr.asc; else { sortConfigPr.col = col; sortConfigPr.asc = true; }
+      renderPracownicyTableHeaders(); applyPracownicyFilters();
+    }
+
+    function applyPracownicyFilters() {
+      let f = pracownicyData.filter(row => {
+        let empStatus = getZatrudnionyStatus(row['Zatrudniony'], row['Kod']);
+
+        for (let key in pracownicyFilters) {
+          if (!pracownicyFilters[key]) continue;
+          let fVal = pracownicyFilters[key];
+          
+          if(key === 'Ilość szafek') {
+             if(fVal === '*' || fVal === '>0') { if(row[key] == 0) return false; }
+             else if(row[key].toString() !== fVal) return false;
+          } else if (key === 'Zatrudniony') {
+             if(fVal === 'tak' && empStatus !== 'Tak') return false;
+             if(fVal === 'nie' && empStatus !== 'Nie') return false;
+          } else {
+             if(!(row[key]||'').toString().toLowerCase().includes(fVal)) return false;
+          }
+        }
+        return true;
+      });
+
+      if(sortConfigPr.col) {
+        f.sort((a,b) => {
+          let va = a[sortConfigPr.col]||'', vb = b[sortConfigPr.col]||'';
+          if(sortConfigPr.col === 'Ilość szafek') { va=parseInt(va)||0; vb=parseInt(vb)||0; }
+          if(sortConfigPr.col === 'Zatrudniony') { va = getZatrudnionyStatus(a['Zatrudniony'], a['Kod']); vb = getZatrudnionyStatus(b['Zatrudniony'], b['Kod']); }
+          if(!isNaN(va) && !isNaN(vb)) return sortConfigPr.asc ? va-vb : vb-va;
+          return sortConfigPr.asc ? va.toString().localeCompare(vb) : vb.toString().localeCompare(va);
+        });
+      }
+
+      let bodyHtml = '';
+      f.forEach(row => {
+        let empStatus = getZatrudnionyStatus(row['Zatrudniony'], row['Kod']);
+        let isFired = empStatus === 'Nie';
+        let tClass = isFired ? 'text-red-600 font-bold' : 'text-gray-700';
+        let bgClass = (selectedEmpCode === row['Kod']) ? 'selected-row' : 'hover:bg-gray-100';
+        
+        bodyHtml += `<tr onclick="selectEmployee('${row['Kod']}')" class="${bgClass} border-b cursor-pointer">`;
+        ['Kod', 'Nazwisko', 'Imię', 'Dział', 'Stanowisko', 'Ilość szafek', 'Zatrudniony'].forEach(col => {
+           let val = row[col];
+           if(col==='Ilość szafek' && val>0) val = `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">${val}</span>`;
+           if(col==='Zatrudniony') val = `<div class="flex items-center"><input type="checkbox" disabled class="w-4 h-4 cursor-not-allowed" ${!isFired ? 'checked' : ''}></div>`;
+           
+           let colWidth = columnWidths.pracownicy[col];
+           bodyHtml += `<td class="px-3 py-1.5 ${tClass}" style="width:${colWidth}px; min-width:${colWidth}px; max-width:${colWidth}px;" title="${(row[col]||'').toString().replace(/"/g, "'")}">${val||''}</td>`;
+        });
+        bodyHtml += '</tr>';
+      });
+      document.getElementById('table-pracownicy-body').innerHTML = bodyHtml;
+    }
+
+    function selectEmployee(kod) {
+      selectedEmpCode = kod; selectedEmpObj = pracownicyData.find(p => p['Kod'] === kod);
+      applyPracownicyFilters(); 
+      document.getElementById('emp-panel-empty').classList.add('hidden');
+      document.getElementById('emp-panel-content').classList.remove('hidden');
+      document.getElementById('emp-panel-name').innerText = `${selectedEmpObj['Nazwisko']} ${selectedEmpObj['Imię']} (${selectedEmpObj['Płeć']})`;
+      document.getElementById('emp-panel-details').innerText = `Kod: ${kod} | ${selectedEmpObj['Dział']}`;
+      renderEmployeeLockersPanel();
+    }
+
+    function renderEmployeeLockersPanel() {
+      let body = document.getElementById('emp-panel-lockers-body');
+      let lockers = szafkiData.filter(s => s['Kod pracownika'] === selectedEmpCode);
+      if (lockers.length === 0) { body.innerHTML = `<tr><td class="p-4 text-center text-gray-500 italic">Brak szafek</td></tr>`; return; }
+      
+      let html = '';
+      lockers.forEach(s => {
+        html += `<tr class="hover:bg-gray-50"><td class="p-1.5">${s['Miejsce']}</td><td class="p-1.5 font-bold">${s['Nr szafki']}</td><td class="p-1.5 text-right"><button onclick="releaseLocker('${s['ID']}', this)" class="bg-red-500 text-white text-xs px-2 py-1 rounded">Zwolnij</button></td></tr>`;
+      });
+      body.innerHTML = html;
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tab-szafki').className = tab==='szafki' ? "pb-2 text-blue-600 border-b-2 border-blue-600 font-bold" : "pb-2 text-gray-500 hover:text-blue-600 font-bold";
+      document.getElementById('tab-pracownicy').className = tab==='pracownicy' ? "pb-2 text-blue-600 border-b-2 border-blue-600 font-bold" : "pb-2 text-gray-500 hover:text-blue-600 font-bold";
+      document.getElementById('view-szafki').classList.toggle('hidden', tab !== 'szafki');
+      document.getElementById('view-pracownicy').classList.toggle('hidden', tab !== 'pracownicy');
+      if(tab==='pracownicy') loadPracownicy();
+    }
+
+    // ==========================================
+    // LOGIKA MODALI SZAFEK
+    // ==========================================
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function addSzafkaRow(nr = '', zamek = '') {
+      const container = document.getElementById('dynamic-lockers-container');
+      const idx = container.children.length + 1;
+      if(idx > 50) { alert('Maksymalnie 50 szafek naraz.'); return; }
+      const row = document.createElement('div');
+      row.className = 'locker-input-row flex gap-2 items-center';
+      row.innerHTML = `
+        <span class="text-gray-500 text-xs w-6 text-right">${idx}.</span>
+        <input type="text" class="inp-nr flex-1 border border-gray-300 rounded p-1 text-sm" placeholder="Nr szafki (puste=Auto)" value="${nr}">
+        <input type="text" class="inp-zamek flex-1 border border-gray-300 rounded p-1 text-sm" placeholder="Nr zamka" value="${zamek}">
+      `;
+      container.appendChild(row);
+      container.parentElement.scrollTop = container.parentElement.scrollHeight;
+    }
+
+    function removeSzafkaRow() {
+      const container = document.getElementById('dynamic-lockers-container');
+      if(container.children.length > 1) container.removeChild(container.lastChild);
+    }
+
+    function openSzafkaModal(row = null) {
+      if(currentUserAccess.role==='admin') document.getElementById('div-dzial').classList.remove('hidden');
+      const container = document.getElementById('dynamic-lockers-container');
+      container.innerHTML = ''; 
+      
+      if(row) {
+        document.getElementById('szafkaModalTitle').innerText = 'Edytuj szafkę';
+        document.getElementById('szafka-id').value = row.ID;
+        document.getElementById('dynamic-controls').classList.add('hidden'); 
+        
+        document.getElementById('sz-miejsce').value = row['Miejsce'];
+        document.getElementById('sz-plec').value = row['Płeć docelowa'];
+        document.getElementById('sz-status').value = row['Status'];
+        document.getElementById('sz-dzial').value = row['Dział szafki'] || '';
+        document.getElementById('sz-koment').value = row['Komentarz'];
+        
+        addSzafkaRow(row['Nr szafki'], row['Nr zamka']);
+      } else {
+        document.getElementById('szafkaModalTitle').innerText = 'Dodaj szafki';
+        document.getElementById('szafka-id').value = '';
+        document.getElementById('dynamic-controls').classList.remove('hidden'); 
+        
+        document.getElementById('sz-miejsce').value = '';
+        document.getElementById('sz-plec').value = 'Neutralna';
+        document.getElementById('sz-status').value = 'Wolna';
+        document.getElementById('sz-dzial').value = currentUserAccess.dzial;
+        document.getElementById('sz-koment').value = '';
+        
+        addSzafkaRow('', ''); 
+      }
+      document.getElementById('szafkaModal').classList.remove('hidden');
+    }
+
+    function saveSzafka() {
+      let btn = document.getElementById('btn-save-szafka');
+      btn.innerText = 'Weryfikacja...'; btn.disabled = true;
+      
+      let miejsceVal = document.getElementById('sz-miejsce').value.trim();
+      let dzialVal = document.getElementById('sz-dzial').value.trim();
+      
+      if(!miejsceVal) { alert("Pole Miejsce jest wymagane!"); btn.innerText = 'Zapisz'; btn.disabled = false; return; }
+      
+      let mList = systemDicts.miejsca.map(m => m.toLowerCase());
+      if (!mList.includes(miejsceVal.toLowerCase())) {
+         if(!confirm(`Uwaga: Podane Miejsce "${miejsceVal}" nie występuje jeszcze w bazie. Czy na pewno chcesz je dodać jako nowe?`)) {
+            btn.innerText = 'Zapisz'; btn.disabled = false; return;
+         }
+      }
+      
+      if (currentUserAccess.role === 'admin' && dzialVal) {
+        let dList = systemDicts.dzialy.map(d => d.toLowerCase());
+        if (!dList.includes(dzialVal.toLowerCase())) {
+           if(!confirm(`Uwaga: Dział "${dzialVal}" jest nowy. Dodać?`)) { btn.innerText = 'Zapisz'; btn.disabled = false; return; }
+        }
+      }
+
+      let szafkiList = [];
+      document.querySelectorAll('.locker-input-row').forEach(r => {
+          szafkiList.push({ nr: r.querySelector('.inp-nr').value.trim(), zamek: r.querySelector('.inp-zamek').value.trim() });
+      });
+      if(szafkiList.length === 0) { alert("Brak szafek do zapisu!"); btn.innerText = 'Zapisz'; btn.disabled = false; return; }
+
+      let payload = {
+        ID: document.getElementById('szafka-id').value, Miejsce: miejsceVal, Plec: document.getElementById('sz-plec').value,
+        Status: document.getElementById('sz-status').value, Dzial: dzialVal, Komentarz: document.getElementById('sz-koment').value, Szafki: szafkiList
+      };
+      
+      btn.innerText = 'Zapisuję...';
+      google.script.run.withSuccessHandler(res=>{
+        closeModal('szafkaModal'); btn.innerText='Zapisz'; btn.disabled=false;
+        document.getElementById('table-szafki-container').classList.add('hidden'); document.getElementById('loading-szafki').classList.remove('hidden');
+        google.script.run.withSuccessHandler(onSzafkiLoaded).getSzafkiData();
+      }).withFailureHandler(e=>{ 
+          btn.innerText='Zapisz'; btn.disabled=false; 
+          showConflictModal(e.message);
+      }).zapiszSzafke(payload);
+    }
+
+    // ==========================================
+    // AKTUALIZACJA RAM PO PRZYDZIALE
+    // ==========================================
+    function updateRamAfterAssignment(lockerId, empCode) {
+        let sz = szafkiData.find(s => s['ID'].toString() === lockerId.toString());
+        let emp = pracownicyData.find(p => p['Kod'].toString() === empCode.toString());
+        
+        if (sz && emp) {
+            sz['Status'] = 'Zajęta';
+            sz['Kod pracownika'] = emp['Kod'];
+            sz['Nazwisko'] = emp['Nazwisko'];
+            sz['Imię'] = emp['Imię'];
+            sz['Dział pracownika'] = emp['Dział'];
+            sz['Stanowisko'] = emp['Stanowisko'];
+            sz['Zatrudniony'] = emp['Zatrudniony'];
+            sz['Zmiana'] = emp['Zmiana'] || ''; 
+            
+            emp['Ilość szafek']++;
+        }
+        
+        document.getElementById('loading-szafki').classList.add('hidden');
+        document.getElementById('table-szafki-container').classList.remove('hidden');
+        document.getElementById('loading-pracownicy').classList.add('hidden');
+        if (isPracownicyLoaded) document.getElementById('pracownicy-content').classList.remove('hidden');
+        
+        applySzafkiFilters();
+        if(isPracownicyLoaded) applyPracownicyFilters();
+        if(selectedEmpCode) renderEmployeeLockersPanel();
+    }
+
+    // ==========================================
+    // PRZYDZIELANIE MODAL SZAFKA -> PRACOWNIK
+    // ==========================================
+    function renderAssignEmpTableHeaders() {
+      const cols = ['Kod', 'Nazwisko i Imię', 'Dział', 'Stanowisko', 'Płeć', 'Akcja'];
+      let h1 = '<tr>';
+      cols.forEach(col => {
+        let wStyle = `style="width:${columnWidths.assignEmp[col]}px; min-width:${columnWidths.assignEmp[col]}px; max-width:${columnWidths.assignEmp[col]}px;"`;
+        let icon = sortConfigEmpModal.col === col ? (sortConfigEmpModal.asc ? ' ↑' : ' ↓') : ' ↕';
+        
+        if (col === 'Akcja') {
+          h1 += `<th class="px-2 py-2 sticky-right text-center" ${wStyle}>Akcja</th>`;
+        } else {
+          h1 += `<th class="px-2 py-2 relative bg-gray-100 border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortAssignEmp('${col}')">
+                   <div class="flex items-center justify-between gap-1">
+                     <span class="truncate">${col}</span>
+                     <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
+                   </div>
+                   <div class="resizer" onclick="event.stopPropagation()"></div>
+                 </th>`;
+        }
+      });
+      h1 += '</tr>';
+      document.getElementById('assign-emp-head').innerHTML = h1;
+      initResizers('assignEmp');
+    }
+
+    function sortAssignEmp(col) {
+      if(sortConfigEmpModal.col === col) sortConfigEmpModal.asc = !sortConfigEmpModal.asc; 
+      else { sortConfigEmpModal.col = col; sortConfigEmpModal.asc = true; }
+      renderAssignEmpTableHeaders(); 
+      filterFreeEmpsTable();
+    }
+
+    function openAssignEmpModal(lockerId, szPlec) {
+      targetLockerForEmp = lockerId;
+      targetLockerPlecForEmp = szPlec;
+      document.getElementById('modal-locker-info-emp').innerText = `Szafka ID: ${lockerId} | Płeć docelowa: ${szPlec}`;
+      document.getElementById('search-free-emps').value = '';
+      document.getElementById('assignEmpModal').classList.remove('hidden');
+      
+      if (!isPracownicyLoaded) {
+        document.getElementById('free-emps-tbody').innerHTML = '<tr><td colspan="6" class="p-4 text-center">Pobieranie bazy pracowników...</td></tr>';
+        google.script.run.withSuccessHandler(data => {
+          pracownicyData = data;
+          isPracownicyLoaded = true;
+          calculateLockerCounts(); 
+          renderPracownicyTableHeaders();
+          
+          renderAssignEmpTableHeaders();
+          filterFreeEmpsTable();
+        }).withFailureHandler(e => alert(e.message)).getPracownicyData();
+      } else {
+        renderAssignEmpTableHeaders();
+        filterFreeEmpsTable();
+      }
+    }
+
+    function filterFreeEmpsTable() {
+      let q = document.getElementById('search-free-emps').value.toLowerCase().trim();
+      let terms = q.split(/\s+/);
+      let pTarget = targetLockerPlecForEmp;
+      
+      let validEmps = pracownicyData.filter(p => {
+        if (getZatrudnionyStatus(p['Zatrudniony'], p['Kod']) !== 'Tak') return false;
+        
+        if (pTarget !== 'Neutralna') {
+          if (pTarget === 'Męska' && p['Płeć'] !== 'Mężczyzna') return false;
+          if (pTarget === 'Damska' && p['Płeć'] !== 'Kobieta') return false;
+        }
+        
+        if (terms.length > 0 && terms[0] !== "") {
+          let textToSearch = `${p['Kod']} ${p['Nazwisko']} ${p['Imię']} ${p['Dział']} ${p['Stanowisko']} ${p['Płeć']}`.toLowerCase();
+          for (let t of terms) {
+            if (!textToSearch.includes(t)) return false;
+          }
+        }
+        return true;
+      });
+
+      if(sortConfigEmpModal.col) {
+        validEmps.sort((a,b) => {
+          let va = '', vb = '';
+          if (sortConfigEmpModal.col === 'Kod') { va = a['Kod']; vb = b['Kod']; }
+          else if (sortConfigEmpModal.col === 'Nazwisko i Imię') { va = a['Nazwisko']+' '+a['Imię']; vb = b['Nazwisko']+' '+b['Imię']; }
+          else if (sortConfigEmpModal.col === 'Dział') { va = a['Dział']; vb = b['Dział']; }
+          else if (sortConfigEmpModal.col === 'Stanowisko') { va = a['Stanowisko']; vb = b['Stanowisko']; }
+          else if (sortConfigEmpModal.col === 'Płeć') { va = a['Płeć']; vb = b['Płeć']; }
+
+          if(!isNaN(va) && !isNaN(vb)) return sortConfigEmpModal.asc ? va-vb : vb-va;
+          return sortConfigEmpModal.asc ? va.toString().localeCompare(vb) : vb.toString().localeCompare(va);
+        });
+      }
+
+      let html = '';
+      let cwKod = columnWidths.assignEmp['Kod'];
+      let cwNazw = columnWidths.assignEmp['Nazwisko i Imię'];
+      let cwDz = columnWidths.assignEmp['Dział'];
+      let cwSt = columnWidths.assignEmp['Stanowisko'];
+      let cwPl = columnWidths.assignEmp['Płeć'];
+      let cwAk = columnWidths.assignEmp['Akcja'];
+
+      validEmps.forEach(p => {
+        html += `<tr class="hover:bg-blue-50 border-b">
+          <td class="p-2 font-bold truncate" style="width:${cwKod}px; min-width:${cwKod}px; max-width:${cwKod}px;" title="${p['Kod']}">${p['Kod']}</td>
+          <td class="p-2 truncate" style="width:${cwNazw}px; min-width:${cwNazw}px; max-width:${cwNazw}px;" title="${p['Nazwisko']} ${p['Imię']}">${p['Nazwisko']} ${p['Imię']}</td>
+          <td class="p-2 truncate" style="width:${cwDz}px; min-width:${cwDz}px; max-width:${cwDz}px;" title="${p['Dział']}">${p['Dział']}</td>
+          <td class="p-2 truncate" style="width:${cwSt}px; min-width:${cwSt}px; max-width:${cwSt}px;" title="${p['Stanowisko']}">${p['Stanowisko']}</td>
+          <td class="p-2 truncate" style="width:${cwPl}px; min-width:${cwPl}px; max-width:${cwPl}px;"><span class="bg-gray-200 px-2 py-0.5 rounded text-xs">${p['Płeć']}</span></td>
+          <td class="p-2 text-center sticky-right border-b border-gray-200" style="width:${cwAk}px; min-width:${cwAk}px; max-width:${cwAk}px;"><button onclick="saveEmpAssignment('${p['Kod']}', this)" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow text-xs font-bold">Wybierz</button></td>
+        </tr>`;
+      });
+      
+      if(validEmps.length === 0) html = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Brak pasujących pracowników.</td></tr>';
+      document.getElementById('free-emps-tbody').innerHTML = html;
+    }
+
+    function saveEmpAssignment(empCode, btn) {
+      let origText = btn.innerText;
+      btn.innerText = "Zapis..."; btn.disabled = true;
+      
+      document.getElementById('table-szafki-container').classList.add('hidden'); document.getElementById('loading-szafki').classList.remove('hidden');
+
+      google.script.run.withSuccessHandler(res=>{
+        if (res && res.success === false) {
+            btn.innerText = origText; btn.disabled=false; 
+            document.getElementById('loading-szafki').classList.add('hidden'); document.getElementById('table-szafki-container').classList.remove('hidden');
+            showConflictModal(res.message);
+            return;
+        }
+        closeModal('assignEmpModal');
+        updateRamAfterAssignment(targetLockerForEmp, empCode);
+      }).withFailureHandler(e=>{ 
+          btn.innerText = origText; btn.disabled=false; 
+          document.getElementById('loading-szafki').classList.add('hidden'); document.getElementById('table-szafki-container').classList.remove('hidden');
+          showConflictModal(e.message);
+      })
+      .przydzielSzafke(targetLockerForEmp, empCode);
+    }
+
+    // ==========================================
+    // PRZYDZIELANIE MODAL PRACOWNIK -> SZAFKA
+    // ==========================================
+    function renderAssignLockerTableHeaders() {
+      const cols = ['Miejsce', 'Nr', 'Zamek', 'Płeć', 'Akcja'];
+      let h1 = '<tr>';
+      cols.forEach(col => {
+        let wStyle = `style="width:${columnWidths.assignLocker[col]}px; min-width:${columnWidths.assignLocker[col]}px; max-width:${columnWidths.assignLocker[col]}px;"`;
+        let icon = sortConfigLockerModal.col === col ? (sortConfigLockerModal.asc ? ' ↑' : ' ↓') : ' ↕';
+        
+        if (col === 'Akcja') {
+          h1 += `<th class="px-2 py-2 sticky-right text-center" ${wStyle}>Akcja</th>`;
+        } else {
+          h1 += `<th class="px-2 py-2 relative bg-gray-100 border-r border-gray-200" ${wStyle} data-col="${col}" onclick="sortAssignLocker('${col}')">
+                   <div class="flex items-center justify-between gap-1">
+                     <span class="truncate">${col}</span>
+                     <span class="text-gray-400 text-xs flex-shrink-0">${icon}</span>
+                   </div>
+                   <div class="resizer" onclick="event.stopPropagation()"></div>
+                 </th>`;
+        }
+      });
+      h1 += '</tr>';
+      document.getElementById('assign-locker-head').innerHTML = h1;
+      initResizers('assignLocker');
+    }
+
+    function sortAssignLocker(col) {
+      if(sortConfigLockerModal.col === col) sortConfigLockerModal.asc = !sortConfigLockerModal.asc; 
+      else { sortConfigLockerModal.col = col; sortConfigLockerModal.asc = true; }
+      renderAssignLockerTableHeaders(); 
+      filterFreeLockersTable();
+    }
+
+    function openAssignLockerModal() {
+      let empStatus = getZatrudnionyStatus(selectedEmpObj['Zatrudniony'], selectedEmpCode);
+      if(!selectedEmpCode || empStatus === 'Nie') { alert("Nie można przydzielić szafki zwolnionemu pracownikowi!"); return; }
+      
+      document.getElementById('modal-emp-info').innerText = `${selectedEmpObj['Nazwisko']} ${selectedEmpObj['Imię']} | Kod: ${selectedEmpCode} | Płeć: ${selectedEmpObj['Płeć']}`;
+      document.getElementById('search-free-lockers').value = '';
+      document.getElementById('assignLockerModal').classList.remove('hidden');
+      
+      renderAssignLockerTableHeaders();
+      filterFreeLockersTable();
+    }
+
+    function filterFreeLockersTable() {
+      let q = document.getElementById('search-free-lockers').value.toLowerCase();
+      let p = selectedEmpObj['Płeć']; 
+      
+      let free = szafkiData.filter(s => {
+        if(s['Status'] !== 'Wolna') return false;
+        let szP = s['Płeć docelowa'];
+        if(szP !== 'Neutralna') {
+          if(p === 'Mężczyzna' && szP !== 'Męska') return false;
+          if(p === 'Kobieta' && szP !== 'Damska') return false;
+        }
+        if(q && !`${s['Miejsce']} ${s['Nr szafki']} ${s['Nr zamka']}`.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      if(sortConfigLockerModal.col) {
+        free.sort((a,b) => {
+          let va = '', vb = '';
+          if (sortConfigLockerModal.col === 'Miejsce') { va = a['Miejsce']; vb = b['Miejsce']; }
+          else if (sortConfigLockerModal.col === 'Nr') { va = a['Nr szafki']; vb = b['Nr szafki']; }
+          else if (sortConfigLockerModal.col === 'Zamek') { va = a['Nr zamka']; vb = b['Nr zamka']; }
+          else if (sortConfigLockerModal.col === 'Płeć') { va = a['Płeć docelowa']; vb = b['Płeć docelowa']; }
+
+          if(!isNaN(va) && !isNaN(vb)) return sortConfigLockerModal.asc ? va-vb : vb-va;
+          return sortConfigLockerModal.asc ? va.toString().localeCompare(vb) : vb.toString().localeCompare(va);
+        });
+      }
+
+      let html = '';
+      let cwM = columnWidths.assignLocker['Miejsce'];
+      let cwN = columnWidths.assignLocker['Nr'];
+      let cwZ = columnWidths.assignLocker['Zamek'];
+      let cwP = columnWidths.assignLocker['Płeć'];
+      let cwA = columnWidths.assignLocker['Akcja'];
+
+      free.forEach(s => {
+        html += `<tr class="hover:bg-blue-50 border-b">
+          <td class="p-2 truncate" style="width:${cwM}px; min-width:${cwM}px; max-width:${cwM}px;" title="${s['Miejsce']}">${s['Miejsce']}</td>
+          <td class="p-2 font-bold truncate" style="width:${cwN}px; min-width:${cwN}px; max-width:${cwN}px;" title="${s['Nr szafki']}">${s['Nr szafki']}</td>
+          <td class="p-2 truncate" style="width:${cwZ}px; min-width:${cwZ}px; max-width:${cwZ}px;" title="${s['Nr zamka']||''}">${s['Nr zamka']||''}</td>
+          <td class="p-2 truncate" style="width:${cwP}px; min-width:${cwP}px; max-width:${cwP}px;"><span class="bg-gray-200 px-2 py-0.5 rounded text-xs">${s['Płeć docelowa']}</span></td>
+          <td class="p-2 text-center sticky-right border-b border-gray-200" style="width:${cwA}px; min-width:${cwA}px; max-width:${cwA}px;"><button onclick="saveLockerAssignment('${s['ID']}', this)" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow text-xs font-bold">Wybierz</button></td>
+        </tr>`;
+      });
+      document.getElementById('free-lockers-tbody').innerHTML = html;
+    }
+
+    function saveLockerAssignment(lockerId, btn) {
+      let origText = btn.innerText;
+      btn.innerText = "Zapis..."; btn.disabled = true;
+      document.getElementById('table-szafki-container').classList.add('hidden'); document.getElementById('loading-szafki').classList.remove('hidden');
+
+      google.script.run.withSuccessHandler(res=>{
+        if (res && res.success === false) {
+            btn.innerText = origText; btn.disabled=false; 
+            document.getElementById('loading-szafki').classList.add('hidden'); document.getElementById('table-szafki-container').classList.remove('hidden');
+            showConflictModal(res.message);
+            return;
+        }
+        closeModal('assignLockerModal');
+        updateRamAfterAssignment(lockerId, selectedEmpCode);
+      }).withFailureHandler(e=>{ 
+          alert(e.message); btn.innerText = origText; btn.disabled=false; 
+          document.getElementById('loading-szafki').classList.add('hidden'); document.getElementById('table-szafki-container').classList.remove('hidden');
+      })
+      .przydzielSzafke(lockerId, selectedEmpCode);
+    }
+  </script>
+</body>
+</html>
