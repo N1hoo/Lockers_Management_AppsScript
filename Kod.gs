@@ -415,7 +415,6 @@ function getAdminActivity() {
      userHistory[u].typ = row[2];
      userHistory[u].szczegoly = row[4];
 
-     // Dodanie loga do bazy szczegółowej
      allLogs.push({
          data: row[0],
          idSzafki: row[1],
@@ -442,9 +441,7 @@ function getAdminActivity() {
      });
   }
   
-  // Najnowsze logi na górze
   allLogs.reverse();
-
   return { stats: stats, rawLogs: allLogs };
 }
 
@@ -453,4 +450,90 @@ function logAppOpen() {
   if (access.authorized) {
     zapiszHistorie(0, 'Logowanie', access.email, 'Uruchomienie aplikacji');
   }
+}
+
+// ==========================================
+// NOWE FUNKCJE ZARZĄDZANIA UŻYTKOWNIKAMI
+// ==========================================
+function dodajUzytkownika(payload) {
+  const access = getUserAccess();
+  if (access.role !== 'admin') throw new Error('Brak uprawnień admina.');
+  const db = getDB();
+  const sheet = db.getSheetByName('Uprawnienia');
+  const data = sheet.getDataRange().getValues();
+  
+  const emailNew = payload.email.toString().toLowerCase().trim();
+  if (!emailNew) throw new Error('Email jest wymagany.');
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0].toString().toLowerCase().trim() === emailNew) {
+      throw new Error('Użytkownik o tym adresie już istnieje.');
+    }
+  }
+  
+  sheet.appendRow([payload.email.trim(), payload.dzial.trim(), payload.rola.trim()]);
+  zapiszHistorie(0, 'Admin - Dodanie', access.email, `Dodano użytkownika: ${payload.email}`);
+  return { success: true };
+}
+
+function edytujUzytkownika(payload) {
+  const access = getUserAccess();
+  if (access.role !== 'admin') throw new Error('Brak uprawnień admina.');
+  const db = getDB();
+  const sheet = db.getSheetByName('Uprawnienia');
+  const data = sheet.getDataRange().getValues();
+  
+  const oldEmail = payload.oldEmail.toString().toLowerCase().trim();
+  const newEmail = payload.email.toString().toLowerCase().trim();
+  
+  let rowIdx = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0].toString().toLowerCase().trim() === oldEmail) {
+      rowIdx = i + 1;
+      break;
+    }
+  }
+  
+  if (rowIdx === -1) throw new Error('Nie znaleziono użytkownika do edycji.');
+  
+  if (oldEmail !== newEmail) {
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0].toString().toLowerCase().trim() === newEmail) {
+        throw new Error('Nowy adres email jest już przypisany do innego użytkownika.');
+      }
+    }
+  }
+  
+  sheet.getRange(rowIdx, 1).setValue(payload.email.trim());
+  sheet.getRange(rowIdx, 2).setValue(payload.dzial.trim());
+  sheet.getRange(rowIdx, 3).setValue(payload.rola.trim());
+  
+  zapiszHistorie(0, 'Admin - Edycja', access.email, `Zaktualizowano użytkownika: ${payload.email}`);
+  return { success: true };
+}
+
+function usunUzytkownika(email) {
+  const access = getUserAccess();
+  if (access.role !== 'admin') throw new Error('Brak uprawnień admina.');
+  if (access.email.toLowerCase().trim() === email.toLowerCase().trim()) {
+    throw new Error('Nie możesz usunąć samego siebie!');
+  }
+  
+  const db = getDB();
+  const sheet = db.getSheetByName('Uprawnienia');
+  const data = sheet.getDataRange().getValues();
+  
+  let rowIdx = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0].toString().toLowerCase().trim() === email.toLowerCase().trim()) {
+      rowIdx = i + 1;
+      break;
+    }
+  }
+  
+  if (rowIdx === -1) throw new Error('Nie znaleziono użytkownika.');
+  
+  sheet.deleteRow(rowIdx);
+  zapiszHistorie(0, 'Admin - Usunięcie', access.email, `Usunięto użytkownika: ${email}`);
+  return { success: true };
 }
